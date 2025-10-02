@@ -5,25 +5,48 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "../contracts/Counters.sol";
 
 contract MyNFT is ERC721URIStorage, Ownable {
-    using Counters for Counters.Counter;
-    Counters.Counter private _tokenIds;
+    using Counters for Counters.Counter;  // 使用计数器来管理tokenId
+    Counters.Counter private _tokenIdCounter;
 
-    constructor(string memory name, string memory symbol, address initialOwner) 
-        ERC721(name, symbol) 
-        Ownable(initialOwner) 
-    {
-        _tokenIds.reset(); // 初始化计数器
+    /**
+     * @dev 构造函数，初始化NFT名称和符号
+     */
+    constructor() ERC721("MyNFT", "MNFT"){
+        // 合约部署时自动执行，设置NFT名称为"MyNFT"，符号为"MNFT"
     }
 
-    function mintNFT(address to, string memory tokenURI) public onlyOwner {
-        _tokenIds.increment(); // 增加计数器
-
-        uint tokenId = _tokenIds._value;
-        _safeMint(to, tokenId); // 铸造NFT并分配给地址to
-        _setTokenURI(tokenId, tokenURI); // 设置NFT的元数据URI
+     /**
+     * @dev 铸造新的NFT
+     * @param to NFT接收者的地址
+     * @notice 只有合约所有者可以调用此函数
+     */
+    function mint(address to) public onlyOwner {
+        // 获取当前tokenId并递增计数器
+        uint256 tokenId = _tokenIdCounter.current();
+        _tokenIdCounter.increment();
+        
+        // 铸造NFT给指定地址
+        _mint(to, tokenId);
     }
 
+    /**
+     * @dev 获取当前已铸造的NFT数量
+     * @return 当前tokenId计数器的值
+     */
     function currentTokenId() public view returns (uint256) {
-        return _tokenIds.current();
+        return _tokenIdCounter.current();
+    }
+
+    /**
+     * @dev 批量铸造NFT
+     * @param to NFT接收者的地址
+     * @param amount 要铸造的NFT数量
+     * @notice 只有合约所有者可以调用此函数
+     */
+    function mintBatch(address to, uint256 amount) public onlyOwner {
+        // 循环铸造指定数量的NFT
+        for (uint256 i = 0; i < amount; i++) {
+            mint(to);
+        }
     }
 }

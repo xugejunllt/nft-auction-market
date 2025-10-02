@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import "../contracts/Counters.sol";
-import "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
 
+// 导入必要的合约接口和库
+import "../contracts/Counters.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
 
 /**
  * @title Auction
@@ -14,12 +14,6 @@ import "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.so
  * @notice 提供完整的拍卖功能，包括创建拍卖、出价、结束拍卖和价格计算
  */
 contract Auction is ReentrancyGuard {
-
-    // 使用Counters库来管理拍卖ID
-    using Counters for Counters.Counter; 
-    // 定义拍卖状态枚举，包含三种状态：活跃、取消、完成
-    enum AuctionStatus { ACTIVE, CANCELLED, COMPLETED } 
-    
     // 拍卖状态结构体定义
     struct AuctionData {
         address seller;                    // 卖家地址
@@ -30,16 +24,15 @@ contract Auction is ReentrancyGuard {
         uint256 highestBid;               // 当前最高出价
         address highestBidder;            // 当前最高出价者
         bool ended;                       // 拍卖是否已结束
-        address quoteToken;               // 竞标代币地址(0地址表示ETH),否则是ERC20代币地址
+        address quoteToken;               // 报价代币地址（address(0)表示ETH）
         uint256 platformFee;              // 平台手续费
-        AuctionStatus status;             // 拍卖状态
     }
 
     // 合约状态变量
     AuctionData public auctionData;                       // 拍卖数据
     AggregatorV3Interface internal priceFeed;            // Chainlink价格预言机
     address public platformFeeRecipient;                 // 手续费接收地址
-
+    
     // 事件定义
     event AuctionCreated(
         address indexed seller,
@@ -49,20 +42,17 @@ contract Auction is ReentrancyGuard {
         uint256 endTime,
         address quoteToken
     );
-    // 出价事件，记录出价者、出价金额（USDT）、出价金额（ETH）
     event BidPlaced(address indexed bidder, uint256 amount, uint256 usdValue);
-    // 拍卖结束事件，记录获胜者地址和出价金额（USDT）
     event AuctionEnded(address indexed winner, uint256 amount);
-    // 取消事件，记录卖家地址
     event AuctionCancelled(address indexed seller);
 
     /**
-     * @dev 构造函数，初始化拍卖合约
+     * @dev 构造函数，初始化拍卖参数
      * @param _seller 卖家地址
      * @param _nftAddress NFT合约地址
      * @param _tokenId 被拍卖的NFT tokenId
      * @param _duration 拍卖持续时间（秒）
-     * @param _quoteToken 竞标代币地址(0地址表示ETH),否则是ERC20代币地址
+     * @param _quoteToken 报价代币地址
      * @param _priceFeed Chainlink价格预言机地址
      * @param _feeRecipient 手续费接收地址
      */
@@ -74,13 +64,13 @@ contract Auction is ReentrancyGuard {
         address _quoteToken,
         address _priceFeed,
         address _feeRecipient
-    ){
-         // 验证参数有效性
+    ) {
+        // 验证参数有效性
         require(_seller != address(0), "Invalid seller address");
         require(_nftAddress != address(0), "Invalid NFT address");
         require(_duration > 0, "Duration must be positive");
         
-         // 初始化拍卖数据结构体
+        // 初始化拍卖数据结构体
         auctionData = AuctionData({
             seller: _seller,
             nftAddress: _nftAddress,
@@ -96,27 +86,27 @@ contract Auction is ReentrancyGuard {
 
         // 设置价格预言机和手续费接收地址
         priceFeed = AggregatorV3Interface(_priceFeed);
-        platformFeeRecipient = _feeRecipient; // 手续费接收地址
-
+        platformFeeRecipient = _feeRecipient;
+        
         // 将NFT从卖家转移到拍卖合约
         IERC721(auctionData.nftAddress).transferFrom(auctionData.seller, address(this), auctionData.tokenId);
-
+        
         // 触发拍卖创建事件
         emit AuctionCreated(
-            _seller,
-            _nftAddress,
-            _tokenId,
-            block.timestamp,
-            block.timestamp + _duration,
-            _quoteToken
+            auctionData.seller,
+            auctionData.nftAddress,
+            auctionData.tokenId,
+            auctionData.startTime,
+            auctionData.endTime,
+            auctionData.quoteToken
         );
     }
 
     /**
-    * @dev 出价函数
-    * @param _amount 出价金额
-    * @notice 用户可以对拍卖进行出价，必须高于当前最高出价
-    */
+     * @dev 出价函数
+     * @param _amount 出价金额
+     * @notice 用户可以对拍卖进行出价，必须高于当前最高出价
+     */
     function bid(uint256 _amount) public payable nonReentrant {
         // 验证拍卖状态
         require(block.timestamp >= auctionData.startTime, "Auction not started");
@@ -124,7 +114,7 @@ contract Auction is ReentrancyGuard {
         require(_amount > auctionData.highestBid, "Bid must be higher than current highest bid");
         require(msg.sender != auctionData.seller, "Seller cannot bid");
         require(!auctionData.ended, "Auction already ended");
-            
+        
         // 根据报价代币类型处理支付
         if (auctionData.quoteToken == address(0)) {
             // ETH支付：验证发送的ETH金额匹配
@@ -132,9 +122,6 @@ contract Auction is ReentrancyGuard {
         } else {
             // ERC20支付：验证没有发送ETH，并转移代币
             require(msg.value == 0, "ETH not accepted for ERC20 auctions");
-            // 验证用户有足够的代币余额
-            require(IERC20(auctionData.quoteToken).balanceOf(msg.sender) >= _amount, "Insufficient ERC20 balance");
-            // 转移代币到当前合约
             bool success = IERC20(auctionData.quoteToken).transferFrom(msg.sender, address(this), _amount);
             require(success, "ERC20 transfer failed");
         }
@@ -146,7 +133,6 @@ contract Auction is ReentrancyGuard {
         
         // 更新最高出价信息
         auctionData.highestBidder = msg.sender;
-        //更新最新出价金额
         auctionData.highestBid = _amount;
         
         // 计算并记录USD价值
@@ -184,7 +170,7 @@ contract Auction is ReentrancyGuard {
             
             // 转移资金
             _transferFunds(auctionData.seller, sellerAmount);
-            _transferFunds(platformFeeRecipient, auctionData.platformFee);  
+            _transferFunds(platformFeeRecipient, auctionData.platformFee);
         } else {
             // 无出价者：将NFT退还给卖家
             IERC721(auctionData.nftAddress).transferFrom(address(this), auctionData.seller, auctionData.tokenId);
@@ -195,9 +181,26 @@ contract Auction is ReentrancyGuard {
     }
 
     /**
+     * @dev 取消拍卖函数（仅卖家可调用）
+     * @notice 在特定条件下允许卖家取消拍卖
+     */
+    function cancelAuction() public nonReentrant {
+        require(msg.sender == auctionData.seller, "Only seller can cancel");
+        require(block.timestamp < auctionData.endTime, "Auction already ended");
+        require(auctionData.highestBidder == address(0), "Cannot cancel with existing bids");
+        require(!auctionData.ended, "Auction already ended");
+        
+        // 将NFT退还给卖家
+        IERC721(auctionData.nftAddress).transferFrom(address(this), auctionData.seller, auctionData.tokenId);
+        auctionData.ended = true;
+        
+        emit AuctionCancelled(auctionData.seller);
+    }
+
+    /**
      * @dev 获取出价的USD价值
      * @param _amount 出价金额
-     * @return USD价值（基于Chainlink预言机价格）·
+     * @return USD价值（基于Chainlink预言机价格）
      */
     function getBidUsdValue(uint256 _amount) public view returns (uint256) {
         // 从Chainlink预言机获取最新价格数据
@@ -208,7 +211,7 @@ contract Auction is ReentrancyGuard {
         return (_amount * uint256(price)) / (10 ** uint256(decimals));
     }
 
-     /**
+    /**
      * @dev 计算动态手续费
      * @param _amount 拍卖金额
      * @return 手续费金额
@@ -225,6 +228,14 @@ contract Auction is ReentrancyGuard {
         } else {
             return _amount * 50 / 1000; // 5% for amounts < 10 ETH
         }
+    }
+
+    /**
+     * @dev 获取完整的拍卖详情
+     * @return 拍卖数据结构体
+     */
+    function getAuctionDetails() public view returns (AuctionData memory) {
+        return auctionData;
     }
 
     /**
@@ -248,7 +259,7 @@ contract Auction is ReentrancyGuard {
         );
     }
 
-     /**
+    /**
      * @dev 获取拍卖时间信息
      * @return startTime 开始时间
      * @return endTime 结束时间
@@ -322,9 +333,4 @@ contract Auction is ReentrancyGuard {
             require(success, "Fund transfer failed");
         }
     }
-
-    
-
-
-
 }
