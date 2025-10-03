@@ -9,11 +9,11 @@ const DEPLOYMENT_CONFIG = {
     usdcUsdPriceFeed: "0xA2F78ab2355fe2f984D808B5CeE7FD0A93D5270E",
     usdcAddress: "0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8" // Sepolia USDC
   },
-  goerli: {
-    ethUsdPriceFeed: "0xD4a33860578De61DBAbDc8BFdb98FD742fA7028e",
-    usdcUsdPriceFeed: "0xAb5c49580294Aff77670F839ea425f5b78ab3Ae7",
-    usdcAddress: "0x07865c6E87B9F70255377e024ace6630C1Eaa37F" // Goerli USDC
-  },
+  // goerli: {
+  //   ethUsdPriceFeed: "0xD4a33860578De61DBAbDc8BFdb98FD742fA7028e",
+  //   usdcUsdPriceFeed: "0xAb5c49580294Aff77670F839ea425f5b78ab3Ae7",
+  //   usdcAddress: "0x07865c6E87B9F70255377e024ace6630C1Eaa37F" // Goerli USDC
+  // },
   localhost: {
     ethUsdPriceFeed: "0x694AA1769357215DE4FAC081bf1f309aDC325306", // 使用Sepolia的地址作为mock
     usdcUsdPriceFeed: "0xA2F78ab2355fe2f984D808B5CeE7FD0A93D5270E",
@@ -24,8 +24,8 @@ const DEPLOYMENT_CONFIG = {
 async function main() {
   console.log("🚀 开始部署 NFT 拍卖市场合约...\n");
 
-  const [deployer] = await ethers.getSigners();
-  const networkName = network.name;
+  const [deployer] = await ethers.getSigners(); // 获取部署者,即第一个账户
+  const networkName = network.name; // 获取当前网络名称,如"sepolia","localhost"等
   
   console.log(`📡 网络: ${networkName}`);
   console.log(`👤 部署者: ${deployer.address}`);

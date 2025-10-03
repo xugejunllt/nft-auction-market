@@ -135,7 +135,7 @@ async function main() {
   console.log("\n7. 更新部署记录...");
   
   const updatedDeploymentInfo = JSON.parse(fs.readFileSync(deploymentFile, 'utf8'));
-  updatedDeploymentInfo.contracts.AuctionFactoryImplementation = newImplementationAddress;
+  updatedDeploymentInfo.contracts.AuctionFactoryImplementation = newImplementationAddress; // 更新实现地址
   updatedDeploymentInfo.lastUpgraded = new Date().toISOString();
   updatedDeploymentInfo.upgradeHistory = updatedDeploymentInfo.upgradeHistory || [];
   updatedDeploymentInfo.upgradeHistory.push(upgradeInfo);

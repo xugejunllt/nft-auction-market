@@ -1,13 +1,21 @@
-# Sample Hardhat Project
+# 1. 安装依赖
+npm install
 
-This project demonstrates a basic Hardhat use case. It comes with a sample contract, a test for that contract, and a Hardhat Ignition module that deploys that contract.
+# 2. 配置环境变量
+cp .env.example .env
+# 编辑 .env 文件，填入你的私钥和API密钥
 
-Try running some of the following tasks:
+# 3. 编译合约
+npx hardhat compile
 
-```shell
-npx hardhat help
+# 4. 运行测试
 npx hardhat test
-REPORT_GAS=true npx hardhat test
-npx hardhat node
-npx hardhat ignition deploy ./ignition/modules/Lock.js
-```
+
+# 5. 部署到测试网
+npx hardhat run scripts/deploy.js --network sepolia
+
+# 6. 验证合约
+npx hardhat run scripts/verify.js --network sepolia
+
+# 7. 升级合约（可选）
+npx hardhat run scripts/upgrade.js --network sepolia

@@ -11,8 +11,9 @@ contract MyNFT is ERC721URIStorage, Ownable {
     /**
      * @dev 构造函数，初始化NFT名称和符号
      */
-    constructor() ERC721("MyNFT", "MNFT"){
+    constructor() ERC721("MyNFT", "MNFT") Ownable(msg.sender){
         // 合约部署时自动执行，设置NFT名称为"MyNFT"，符号为"MNFT"
+        // 并设置部署者为初始所有者
     }
 
      /**

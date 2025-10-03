@@ -60,10 +60,7 @@ contract AuctionFactory is Initializable, UUPSUpgradeable, OwnableUpgradeable {
      * @dev 构造函数（禁止初始化）
      * @notice UUPS代理模式要求禁用构造函数
      */
-    // @custom:oz-upgrades-unsafe-allow constructor
-    constructor() {
-        _disableInitializers();
-    }
+    // 注意：可升级合约不能有构造函数，所有初始化逻辑都应放在initialize函数中
 
     /**
      * @dev 初始化函数（代理模式替代构造函数）
@@ -134,7 +131,7 @@ contract AuctionFactory is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         uint256 _tokenId,
         uint256 _duration,
         address _quoteToken
-    ) public returns (address) {
+    ) public virtual returns (address) {
         // 验证报价代币是否支持
         require(supportedTokens[_quoteToken].isSupported, "Quote token not supported");
         
@@ -260,7 +257,7 @@ contract AuctionFactory is Initializable, UUPSUpgradeable, OwnableUpgradeable {
      * @dev 获取合约版本信息
      * @return 版本字符串
      */
-    function version() public pure returns (string memory) {
+    function version() public pure virtual returns (string memory) {
         return "v1.1.0"; // 版本号更新，反映结构体重构
     }
 }
