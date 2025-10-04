@@ -12,8 +12,8 @@ npx hardhat compile
 npx hardhat test
 
 # 41. 部署到本地
-npx hardhat run scripts/deploy-mock-erc20.js
-npx hardhat run scripts/deploy-mock-price-feed.js
+npx hardhat run scripts/deploy-mock-erc20.js --network localhost
+npx hardhat run scripts/deploy-mock-price-feed.js --network localhost
 
 
 # 5. 部署到测试网

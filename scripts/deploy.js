@@ -115,7 +115,7 @@ async function main() {
       supportedTokens: {
         ETH: {
           address: ethers.ZeroAddress,
-    priceFeed: config.ethUsdPriceFeed
+          priceFeed: config.ethUsdPriceFeed
         }
       }
     }

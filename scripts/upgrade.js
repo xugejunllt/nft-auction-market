@@ -14,7 +14,7 @@ async function main() {
   
   console.log(`📡 网络: ${networkName}`);
   console.log(`👤 升级执行者: ${deployer.address}`);
-  console.log(`💰 余额: ${ethers.utils.formatEther(await deployer.getBalance())} ETH\n`);
+  console.log(`💰 余额: ${ethers.formatEther(await deployer.provider.getBalance(deployer.address))} ETH\n`);
 
   // 1. 读取之前的部署信息
   console.log("1. 查找之前的部署信息...");
@@ -74,13 +74,14 @@ async function main() {
   });
   
   // 等待升级完成
-  await upgraded.deployed();
+  // await upgraded.deployed();
+  await upgraded.waitForDeployment();
   console.log(`   ✅ 合约升级成功！`);
 
   // 4. 验证升级结果
   console.log("\n4. 验证升级结果...");
   
-  const newImplementationAddress = await upgrades.erc1967.getImplementationAddress(upgraded.address);
+  const newImplementationAddress = await upgrades.erc1967.getImplementationAddress(await upgraded.getAddress());
   console.log(`   ✅ 新实现地址: ${newImplementationAddress}`);
   
   const newVersion = await upgraded.version();

@@ -4,7 +4,7 @@
   "contracts": {
     "MyNFT": "0x0E801D84Fa97b50751Dbf25036d067dCf18858bF",
     "AuctionFactory": "0x8f86403A4DE0BB5791fa46B8e795C547942fE4Cf",
-    "AuctionFactoryImplementation": "0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e"
+    "AuctionFactoryImplementation": "0x4c5859f0F772848b2D91F1D83E2Fe57935348029"
   },
   "config": {
     "platformFeeRecipient": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
@@ -14,5 +14,18 @@
         "priceFeed": "0x694AA1769357215DE4FAC081bf1f309aDC325306"
       }
     }
-  }
+  },
+  "lastUpgraded": "2025-10-04T16:12:33.317Z",
+  "upgradeHistory": [
+    {
+      "network": "localhost",
+      "timestamp": "2025-10-04T16:12:33.315Z",
+      "upgradedBy": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+      "fromImplementation": "0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e",
+      "toImplementation": "0x4c5859f0F772848b2D91F1D83E2Fe57935348029",
+      "proxyAddress": "0x8f86403A4DE0BB5791fa46B8e795C547942fE4Cf",
+      "fromVersion": "v1.1.0",
+      "toVersion": "v2.0.0"
+    }
+  ]
 }
