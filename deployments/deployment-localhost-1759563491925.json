@@ -1,0 +1,18 @@
+{
+  "network": "localhost",
+  "timestamp": "2025-10-04T07:38:11.921Z",
+  "contracts": {
+    "MyNFT": "0x0E801D84Fa97b50751Dbf25036d067dCf18858bF",
+    "AuctionFactory": "0x8f86403A4DE0BB5791fa46B8e795C547942fE4Cf",
+    "AuctionFactoryImplementation": "0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e"
+  },
+  "config": {
+    "platformFeeRecipient": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+    "supportedTokens": {
+      "ETH": {
+        "address": "0x0000000000000000000000000000000000000000",
+        "priceFeed": "0x694AA1769357215DE4FAC081bf1f309aDC325306"
+      }
+    }
+  }
+}

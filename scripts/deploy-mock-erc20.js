@@ -30,21 +30,21 @@ async function main() {
       tokenConfig.symbol,
       tokenConfig.decimals
     );
-    await token.deployed();
+    await token.waitForDeployment();
 
     // 给部署者分配测试代币
-    const mintAmount = ethers.utils.parseUnits("1000000", tokenConfig.decimals);
+    const mintAmount = ethers.parseUnits("1000000", tokenConfig.decimals)
     await token.mint(deployer.address, mintAmount);
 
     deploymentResults.push({
       name: tokenConfig.name,
       symbol: tokenConfig.symbol,
-      address: token.address,
+      address: await token.getAddress(),
       decimals: tokenConfig.decimals
     });
 
-    console.log(`   ✅ ${tokenConfig.symbol} 部署成功: ${token.address}`);
-    console.log(`   💰 已分配: ${ethers.utils.formatUnits(mintAmount, tokenConfig.decimals)} ${tokenConfig.symbol}`);
+    console.log(`   ✅ ${tokenConfig.symbol} 部署成功: ${await token.getAddress()}`);
+    console.log(`   💰 已分配: ${ethers.formatUnits(mintAmount, tokenConfig.decimals)} ${tokenConfig.symbol}`);
   }
 
   console.log("\n🎉 Mock ERC20 代币部署完成！");

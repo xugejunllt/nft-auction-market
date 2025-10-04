@@ -11,6 +11,11 @@ npx hardhat compile
 # 4. 运行测试
 npx hardhat test
 
+# 41. 部署到本地
+npx hardhat run scripts/deploy-mock-erc20.js
+npx hardhat run scripts/deploy-mock-price-feed.js
+
+
 # 5. 部署到测试网
 npx hardhat run scripts/deploy.js --network sepolia
 

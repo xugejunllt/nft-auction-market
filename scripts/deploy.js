@@ -17,7 +17,7 @@ const DEPLOYMENT_CONFIG = {
   localhost: {
     ethUsdPriceFeed: "0x694AA1769357215DE4FAC081bf1f309aDC325306", // 使用Sepolia的地址作为mock
     usdcUsdPriceFeed: "0xA2F78ab2355fe2f984D808B5CeE7FD0A93D5270E",
-    usdcAddress: ethers.constants.AddressZero // 本地测试时使用mock
+    usdcAddress: ethers.ZeroAddress// 本地测试时使用mock
   }
 };
 
@@ -29,7 +29,7 @@ async function main() {
   
   console.log(`📡 网络: ${networkName}`);
   console.log(`👤 部署者: ${deployer.address}`);
-  console.log(`💰 部署者余额: ${ethers.utils.formatEther(await deployer.getBalance())} ETH\n`);
+  console.log(`💰 部署者余额: ${ethers.formatEther(await deployer.provider.getBalance(deployer.address))} ETH\n`);
 
   // 获取部署配置
   const config = DEPLOYMENT_CONFIG[networkName] || DEPLOYMENT_CONFIG.localhost;
@@ -38,8 +38,9 @@ async function main() {
   console.log("1. 部署 MyNFT 合约...");
   const MyNFT = await ethers.getContractFactory("MyNFT");
   const nft = await MyNFT.deploy();
-  await nft.deployed();
-  console.log(`   ✅ MyNFT 部署成功: ${nft.address}`);
+  await nft.waitForDeployment();
+  const nftAddress = await nft.getAddress();
+  console.log(`   ✅ MyNFT 部署成功: ${nftAddress}`);
 
   // 2. 部署 AuctionFactory 代理合约
   console.log("2. 部署 AuctionFactory 代理合约...");
@@ -52,22 +53,23 @@ async function main() {
       kind: "uups"
     }
   );
-  await auctionFactory.deployed();
-  console.log(`   ✅ AuctionFactory 代理部署成功: ${auctionFactory.address}`);
+  await auctionFactory.waitForDeployment();
+  const auctionFactoryAddress = await auctionFactory.getAddress();
+  console.log(`   ✅ AuctionFactory 代理部署成功: ${auctionFactoryAddress}`);
 
   // 3. 添加支持的报价代币
   console.log("3. 配置支持的报价代币...");
   
   // 添加 ETH 支持
   await auctionFactory.addQuoteToken(
-    ethers.constants.AddressZero, // ETH
+    ethers.ZeroAddress, // ETH
     config.ethUsdPriceFeed,
     "ETH"
   );
   console.log(`   ✅ ETH 支持已添加`);
 
   // 如果网络不是localhost且配置了USDC地址，添加USDC支持
-  if (config.usdcAddress !== ethers.constants.AddressZero) {
+  if (config.usdcAddress !== ethers.ZeroAddress) {
     await auctionFactory.addQuoteToken(
       config.usdcAddress,
       config.usdcUsdPriceFeed,
@@ -81,19 +83,20 @@ async function main() {
     console.log("4. 部署测试用 Mock ERC20 代币...");
     const MockERC20 = await ethers.getContractFactory("MockERC20");
     const mockUSDC = await MockERC20.deploy("Mock USDC", "mUSDC", 6);
-    await mockUSDC.deployed();
-    console.log(`   ✅ Mock USDC 部署成功: ${mockUSDC.address}`);
+    await mockUSDC.waitForDeployment();
+    const mockUSDCAddress = await mockUSDC.getAddress();
+    console.log(`   ✅ Mock USDC 部署成功: ${mockUSDCAddress}`);
 
     // 添加 Mock USDC 支持
     await auctionFactory.addQuoteToken(
-      mockUSDC.address,
+      mockUSDCAddress,
       config.usdcUsdPriceFeed,
       "mUSDC"
     );
     console.log(`   ✅ Mock USDC 支持已添加`);
 
     // 给部署者分配测试代币
-    await mockUSDC.mint(deployer.address, ethers.utils.parseUnits("10000", 6));
+    await mockUSDC.mint(deployer.address, ethers.parseUnits("10000", 6));
     console.log(`   💰 已向部署者分配 10,000 mUSDC 测试代币`);
   }
 
@@ -103,16 +106,16 @@ async function main() {
     network: networkName,
     timestamp: new Date().toISOString(),
     contracts: {
-      MyNFT: nft.address,
-      AuctionFactory: auctionFactory.address,
-      AuctionFactoryImplementation: await upgrades.erc1967.getImplementationAddress(auctionFactory.address)
+      MyNFT: nftAddress,
+      AuctionFactory: auctionFactoryAddress,
+      AuctionFactoryImplementation: await upgrades.erc1967.getImplementationAddress(auctionFactoryAddress)
     },
     config: {
       platformFeeRecipient: deployer.address,
       supportedTokens: {
         ETH: {
-          address: ethers.constants.AddressZero,
-          priceFeed: config.ethUsdPriceFeed
+          address: ethers.ZeroAddress,
+    priceFeed: config.ethUsdPriceFeed
         }
       }
     }
@@ -120,15 +123,9 @@ async function main() {
 
   // 添加 USDC 信息（如果部署了）
   if (networkName === "localhost" || networkName === "hardhat") {
-    const MockERC20 = await ethers.getContractFactory("MockERC20");
-    const mockUSDC = await MockERC20.deploy("Mock USDC", "mUSDC", 6);
-    await mockUSDC.deployed();
-    deploymentInfo.contracts.MockUSDC = mockUSDC.address;
-    deploymentInfo.config.supportedTokens.USDC = {
-      address: mockUSDC.address,
-      priceFeed: config.usdcUsdPriceFeed
-    };
-  } else if (config.usdcAddress !== ethers.constants.AddressZero) {
+    // 部署信息已在前面的部署流程中设置
+    console.log(`   ✅ USDC 部署信息已记录`);
+  } else if (config.usdcAddress !== ethers.ZeroAddress) {
     deploymentInfo.config.supportedTokens.USDC = {
       address: config.usdcAddress,
       priceFeed: config.usdcUsdPriceFeed
@@ -156,14 +153,14 @@ async function main() {
   console.log(`      - 总拍卖数量: ${factoryConfig.totalAuctionsCreated}`);
 
   // 验证支持的代币
-  const ethConfig = await auctionFactory.supportedTokens(ethers.constants.AddressZero);
+  const ethConfig = await auctionFactory.supportedTokens(ethers.ZeroAddress);
   console.log(`   ✅ ETH 支持验证: ${ethConfig.isSupported ? '✅' : '❌'}`);
 
   console.log("\n🎉 部署完成！");
   console.log("==========================================");
   console.log("📊 部署摘要:");
-  console.log(`   MyNFT: ${nft.address}`);
-  console.log(`   AuctionFactory (代理): ${auctionFactory.address}`);
+  console.log(`   MyNFT: ${nftAddress}`);
+  console.log(`   AuctionFactory (代理): ${auctionFactoryAddress}`);
   console.log(`   AuctionFactory (实现): ${deploymentInfo.contracts.AuctionFactoryImplementation}`);
   console.log("==========================================\n");
 
