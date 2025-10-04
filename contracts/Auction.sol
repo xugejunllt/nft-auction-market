@@ -88,8 +88,7 @@ contract Auction is ReentrancyGuard {
         priceFeed = AggregatorV3Interface(_priceFeed);
         platformFeeRecipient = _feeRecipient;
         
-        // 将NFT从卖家转移到拍卖合约
-        IERC721(auctionData.nftAddress).transferFrom(auctionData.seller, address(this), auctionData.tokenId);
+        // 注意：NFT转移现在由工厂合约通过transferNFT函数处理
         
         // 触发拍卖创建事件
         emit AuctionCreated(
@@ -100,6 +99,18 @@ contract Auction is ReentrancyGuard {
             auctionData.endTime,
             auctionData.quoteToken
         );
+    }
+    
+    /**
+     * @dev 转移NFT到拍卖合约
+     * @param _seller NFT卖家地址
+     * @notice 由工厂合约调用，执行NFT从卖家到拍卖合约的转移
+     */
+    function transferNFT(address _seller) external {
+        // 验证卖家地址
+        require(_seller == auctionData.seller, "Invalid seller address");
+        // 将NFT从卖家转移到拍卖合约
+        IERC721(auctionData.nftAddress).transferFrom(_seller, address(this), auctionData.tokenId);
     }
 
     /**
@@ -191,6 +202,7 @@ contract Auction is ReentrancyGuard {
         require(!auctionData.ended, "Auction already ended");
         
         // 将NFT退还给卖家
+        //因为from是address(this),即代币此时应在当前账户,区别于IERC20(tokenX).transferFrom(userA, userB, amountA);
         IERC721(auctionData.nftAddress).transferFrom(address(this), auctionData.seller, auctionData.tokenId);
         auctionData.ended = true;
         

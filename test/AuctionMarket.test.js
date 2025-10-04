@@ -143,191 +143,313 @@ describe("NFT Auction Market - 完整测试套件", function () {
     });
   });
 
+//   describe("拍卖创建测试", function () {
+//     // 修改测试策略，使用create2预测拍卖地址并提前授权
+//     beforeEach(async function () {
+//       // 铸造NFT
+//       await nft.mint(seller.address);
+//     });
+
+//     it("应该成功创建ETH拍卖", async function () {
+//       // 获取合约地址
+//       const nftAddress = await nft.getAddress();
+      
+//       // 注意：由于合约设计的限制（Auction合约在构造函数中直接转移NFT），
+//       // 我们无法在创建拍卖前预先授权给拍卖合约
+//       // 正确的做法是修改Auction合约，将NFT转移逻辑从构造函数移到单独的初始化函数
+      
+//       // 在不修改合约的情况下，我们可以尝试使用一个技巧：
+//       // 1. 先调用createAuction（这会失败并返回错误）
+//       // 2. 从错误中提取实际的拍卖合约地址
+//       // 3. 为该地址授权NFT
+//       // 4. 再次调用createAuction
+      
+//       try {
+//         // 第一次调用会失败，但会告诉我们实际的拍卖合约地址
+//         await auctionFactory.connect(seller).createAuction(
+//           nftAddress,
+//           0,
+//           AUCTION_DURATION,
+//           "0x0000000000000000000000000000000000000000" // 固定的零地址
+//         );
+//       } catch (error) {
+//         // 从错误中提取拍卖合约地址
+//         const errorMessage = error.message;
+//         const addressMatch = errorMessage.match(/ERC721InsufficientApproval\("([0-9a-fA-Fx]+)"/);
+        
+//         if (addressMatch && addressMatch[1]) {
+//           const actualAuctionAddress = addressMatch[1];
+//           console.log(`从错误中提取的拍卖合约地址: ${actualAuctionAddress}`);
+          
+//           // 为实际的拍卖合约地址授权NFT
+//           await nft.connect(seller).approve(actualAuctionAddress, 0);
+          
+//           // 再次尝试创建拍卖（添加错误处理）
+//             let receipt, auctionCreatedEvent;
+//             try {
+//               console.log(`第二次尝试创建拍卖，已授权地址: ${actualAuctionAddress}`);
+//               const tx = await auctionFactory.connect(seller).createAuction(
+//                 nftAddress,
+//                 0,
+//                 AUCTION_DURATION,
+//                 "0x0000000000000000000000000000000000000000" // 固定的零地址
+//               );
+              
+//               console.log("交易已发送，等待确认...");
+//               receipt = await tx.wait();
+//               console.log("交易已确认，获取到收据");
+              
+//               // 确保receipt存在
+//               expect(receipt).to.not.be.undefined;
+              
+//               // 查找AuctionCreated事件
+//               if (receipt.events) {
+//                 auctionCreatedEvent = receipt.events.find(e => e.event === 'AuctionCreated');
+//                 expect(auctionCreatedEvent).to.not.be.undefined;
+//               } else {
+//                 console.log("警告：收据中没有事件");
+//               }
+//             } catch (secondError) {
+//               console.error("第二次创建拍卖时出错:", secondError.message);
+//               throw new Error(`第二次创建拍卖失败: ${secondError.message}`);
+//             }
+          
+//           // 验证事件参数（只有在event存在时才验证）
+//           if (auctionCreatedEvent) {
+//             expect(auctionCreatedEvent.args.auctionAddress).to.not.be.undefined;
+//             expect(auctionCreatedEvent.args.seller).to.equal(seller.address);
+//             expect(auctionCreatedEvent.args.nftAddress).to.equal(nftAddress);
+//             expect(auctionCreatedEvent.args.tokenId).to.equal(0);
+//           }
+          
+//           // 验证拍卖数量统计
+//           expect(await auctionFactory.getAuctionsCount()).to.equal(1);
+          
+//           // 验证用户统计
+//           const userStats = await auctionFactory.getUserStats(seller.address);
+//           expect(userStats.createdAuctions).to.equal(1);
+//         } else {
+//           // 如果无法提取地址，我们仍然让测试失败
+//           throw new Error("无法从错误中提取拍卖合约地址");
+//         }
+//       }
+//     });
+
+//     it("应该成功创建ERC20拍卖", async function () {
+//       // 获取合约地址
+//       const nftAddress = await nft.getAddress();
+//       const erc20Address = await mockERC20.getAddress();
+      
+//       // 使用相同的技巧：先尝试失败，获取地址，然后授权
+//       try {
+//         // 第一次调用会失败，但会告诉我们实际的拍卖合约地址
+//         await auctionFactory.connect(seller).createAuction(
+//           nftAddress,
+//           0,
+//           AUCTION_DURATION,
+//           erc20Address
+//         );
+//       } catch (error) {
+//         // 从错误中提取拍卖合约地址
+//         const errorMessage = error.message;
+//         const addressMatch = errorMessage.match(/ERC721InsufficientApproval\("([0-9a-fA-Fx]+)"/);
+        
+//         if (addressMatch && addressMatch[1]) {
+//           const actualAuctionAddress = addressMatch[1];
+//           console.log(`从错误中提取的ERC20拍卖合约地址: ${actualAuctionAddress}`);
+          
+//           // 为实际的拍卖合约地址授权NFT
+//           await nft.connect(seller).approve(actualAuctionAddress, 0);
+          
+//           // 再次尝试创建拍卖（添加错误处理）
+//             let receipt, auctionCreatedEvent;
+//             try {
+//               console.log(`第二次尝试创建ERC20拍卖,已授权地址: ${actualAuctionAddress}`);
+//               const tx = await auctionFactory.connect(seller).createAuction(
+//                 nftAddress,
+//                 0,
+//                 AUCTION_DURATION,
+//                 erc20Address
+//               );
+              
+//               console.log("交易已发送，等待确认...");
+//               receipt = await tx.wait();
+//               console.log("交易已确认，获取到收据");
+              
+//               // 确保receipt存在
+//               expect(receipt).to.not.be.undefined;
+              
+//               // 查找AuctionCreated事件
+//               if (receipt.events) {
+//                 auctionCreatedEvent = receipt.events.find(e => e.event === 'AuctionCreated');
+//                 expect(auctionCreatedEvent).to.not.be.undefined;
+//               } else {
+//                 console.log("警告：收据中没有事件");
+//               }
+//             } catch (secondError) {
+//               console.error("第二次创建ERC20拍卖时出错:", secondError.message);
+//               throw new Error(`第二次创建ERC20拍卖失败: ${secondError.message}`);
+//             }
+          
+//           // 验证事件参数（只有在event存在时才验证）
+//           if (auctionCreatedEvent) {
+//             expect(auctionCreatedEvent.args.auctionAddress).to.not.be.undefined;
+//             expect(auctionCreatedEvent.args.seller).to.equal(seller.address);
+//             expect(auctionCreatedEvent.args.nftAddress).to.equal(nftAddress);
+//             expect(auctionCreatedEvent.args.tokenId).to.equal(0);
+//             expect(auctionCreatedEvent.args.quoteToken).to.equal(erc20Address);
+//           }
+//         } else {
+//           // 如果无法提取地址，我们仍然让测试失败
+//           throw new Error("无法从错误中提取ERC20拍卖合约地址");
+//         }
+//       }
+//     });
+
+//     it("只有NFT所有者可以创建拍卖", async function () {
+//       const nftAddress = await nft.getAddress();
+//       await expect(
+//         auctionFactory.connect(bidder1).createAuction(
+//           nftAddress,
+//           0,
+//           AUCTION_DURATION,
+//           "0x0000000000000000000000000000000000000000" // 固定的零地址
+//         )
+//       ).to.be.reverted;
+//     });
+
+//     it("不能使用不支持的代币创建拍卖", async function () {
+//       const nftAddress = await nft.getAddress();
+//       await expect(
+//         auctionFactory.connect(seller).createAuction(
+//           nftAddress,
+//           0,
+//           AUCTION_DURATION,
+//           bidder1.address // 随机地址，不支持
+//         )
+//       ).to.be.reverted;
+//     });
+//   });
+
   describe("拍卖创建测试", function () {
-    // 修改测试策略，使用create2预测拍卖地址并提前授权
     beforeEach(async function () {
-      // 铸造NFT
+      // 铸造NFT并授权给工厂
       await nft.mint(seller.address);
+      const factoryAddress = await auctionFactory.getAddress();
+    //   await nft.connect(seller).approve(factoryAddress, 0); 应该不需要授权给工厂合约，只需要授权给拍卖合约？
     });
 
     it("应该成功创建ETH拍卖", async function () {
-      // 获取合约地址
       const nftAddress = await nft.getAddress();
-      
-      // 注意：由于合约设计的限制（Auction合约在构造函数中直接转移NFT），
-      // 我们无法在创建拍卖前预先授权给拍卖合约
-      // 正确的做法是修改Auction合约，将NFT转移逻辑从构造函数移到单独的初始化函数
-      
-      // 在不修改合约的情况下，我们可以尝试使用一个技巧：
-      // 1. 先调用createAuction（这会失败并返回错误）
-      // 2. 从错误中提取实际的拍卖合约地址
-      // 3. 为该地址授权NFT
-      // 4. 再次调用createAuction
-      
-      try {
-        // 第一次调用会失败，但会告诉我们实际的拍卖合约地址
-        await auctionFactory.connect(seller).createAuction(
+      // 发送交易创建拍卖
+      const tx = await auctionFactory.connect(seller).createAuction(
           nftAddress,
           0,
           AUCTION_DURATION,
-          "0x0000000000000000000000000000000000000000" // 固定的零地址
+          ethers.ZeroAddress
         );
-      } catch (error) {
-        // 从错误中提取拍卖合约地址
-        const errorMessage = error.message;
-        const addressMatch = errorMessage.match(/ERC721InsufficientApproval\("([0-9a-fA-Fx]+)"/);
-        
-        if (addressMatch && addressMatch[1]) {
-          const actualAuctionAddress = addressMatch[1];
-          console.log(`从错误中提取的拍卖合约地址: ${actualAuctionAddress}`);
-          
-          // 为实际的拍卖合约地址授权NFT
-          await nft.connect(seller).approve(actualAuctionAddress, 0);
-          
-          // 再次尝试创建拍卖（添加错误处理）
-            let receipt, auctionCreatedEvent;
-            try {
-              console.log(`第二次尝试创建拍卖，已授权地址: ${actualAuctionAddress}`);
-              const tx = await auctionFactory.connect(seller).createAuction(
-                nftAddress,
-                0,
-                AUCTION_DURATION,
-                "0x0000000000000000000000000000000000000000" // 固定的零地址
-              );
-              
-              console.log("交易已发送，等待确认...");
-              receipt = await tx.wait();
-              console.log("交易已确认，获取到收据");
-              
-              // 确保receipt存在
-              expect(receipt).to.not.be.undefined;
-              
-              // 查找AuctionCreated事件
-              if (receipt.events) {
-                auctionCreatedEvent = receipt.events.find(e => e.event === 'AuctionCreated');
-                expect(auctionCreatedEvent).to.not.be.undefined;
-              } else {
-                console.log("警告：收据中没有事件");
-              }
-            } catch (secondError) {
-              console.error("第二次创建拍卖时出错:", secondError.message);
-              throw new Error(`第二次创建拍卖失败: ${secondError.message}`);
-            }
-          
-          // 验证事件参数（只有在event存在时才验证）
-          if (auctionCreatedEvent) {
-            expect(auctionCreatedEvent.args.auctionAddress).to.not.be.undefined;
-            expect(auctionCreatedEvent.args.seller).to.equal(seller.address);
-            expect(auctionCreatedEvent.args.nftAddress).to.equal(nftAddress);
-            expect(auctionCreatedEvent.args.tokenId).to.equal(0);
-          }
-          
-          // 验证拍卖数量统计
-          expect(await auctionFactory.getAuctionsCount()).to.equal(1);
-          
-          // 验证用户统计
-          const userStats = await auctionFactory.getUserStats(seller.address);
-          expect(userStats.createdAuctions).to.equal(1);
-        } else {
-          // 如果无法提取地址，我们仍然让测试失败
-          throw new Error("无法从错误中提取拍卖合约地址");
-        }
-      }
+
+    //   console.log("Receipt:", receipt);
+    //   console.log("Receipt logs:", receipt.logs);
+      const receipt = await tx.wait();
+      
+      // 方法2：直接从交易中获取拍卖地址（由于createAuction返回auctionAddress）
+      // 在ethers.js中，我们可以通过访问交易收据中的日志或者使用交易哈希
+      // 这里使用一个简化的方法来创建模拟事件对象
+    //   const auctionCreatedEvent = {
+    //     args: {
+    //       auctionAddress: receipt.logs[0] ? receipt.logs[0].address : '0x', // 使用第一个日志的地址作为备选
+    //       seller: seller.address,
+    //       nftAddress: nftAddress,
+    //       tokenId: 0
+    //     }
+    //   };
+
+    //   const auctionCreatedEvent = receipt.events.find(e => e.event === 'AuctionCreated');
+      const blockNumber = receipt.blockNumber;
+
+      // 使用区块号而不是区块哈希
+      const filter = auctionFactory.filters.AuctionCreated();
+      const events = await auctionFactory.queryFilter(filter, blockNumber, blockNumber);
+      const auctionCreatedEvent = events[0];
+
+      console.log("Auction address:", auctionCreatedEvent.args.auction);
+      expect(auctionCreatedEvent.args.auctionAddress).to.not.be.undefined;
+      expect(auctionCreatedEvent.args.seller).to.equal(seller.address);
+      expect(auctionCreatedEvent.args.nftAddress).to.equal(nftAddress);
+      expect(auctionCreatedEvent.args.tokenId).to.equal(0);
+      
+      // 获取拍卖合约实例
+      const auctionAddress = auctionCreatedEvent.args.auctionAddress;
+      const auction = await ethers.getContractAt('Auction', auctionAddress);
+      
+      // 先授权NFT给拍卖合约，使其有权限转移NFT
+      await nft.connect(seller).approve(auctionAddress, 0);
+      
+      // 调用transferNFT函数将NFT从卖家转移到拍卖合约
+      await auction.connect(seller).transferNFT(seller.address);
+      
+      // 验证拍卖数量统计
+      expect(await auctionFactory.getAuctionsCount()).to.equal(1);
+      
+      // 验证用户统计
+      const userStats = await auctionFactory.getUserStats(seller.address);
+      expect(userStats.createdAuctions).to.equal(1);
     });
 
     it("应该成功创建ERC20拍卖", async function () {
-      // 获取合约地址
+      // 授权ERC20代币
+      const factoryAddress = await auctionFactory.getAddress();
+      await mockERC20.connect(seller).approve(factoryAddress, 0);
+
       const nftAddress = await nft.getAddress();
       const erc20Address = await mockERC20.getAddress();
-      
-      // 使用相同的技巧：先尝试失败，获取地址，然后授权
-      try {
-        // 第一次调用会失败，但会告诉我们实际的拍卖合约地址
-        await auctionFactory.connect(seller).createAuction(
-          nftAddress,
-          0,
-          AUCTION_DURATION,
-          erc20Address
-        );
-      } catch (error) {
-        // 从错误中提取拍卖合约地址
-        const errorMessage = error.message;
-        const addressMatch = errorMessage.match(/ERC721InsufficientApproval\("([0-9a-fA-Fx]+)"/);
-        
-        if (addressMatch && addressMatch[1]) {
-          const actualAuctionAddress = addressMatch[1];
-          console.log(`从错误中提取的ERC20拍卖合约地址: ${actualAuctionAddress}`);
-          
-          // 为实际的拍卖合约地址授权NFT
-          await nft.connect(seller).approve(actualAuctionAddress, 0);
-          
-          // 再次尝试创建拍卖（添加错误处理）
-            let receipt, auctionCreatedEvent;
-            try {
-              console.log(`第二次尝试创建ERC20拍卖，已授权地址: ${actualAuctionAddress}`);
-              const tx = await auctionFactory.connect(seller).createAuction(
-                nftAddress,
-                0,
-                AUCTION_DURATION,
-                erc20Address
-              );
-              
-              console.log("交易已发送，等待确认...");
-              receipt = await tx.wait();
-              console.log("交易已确认，获取到收据");
-              
-              // 确保receipt存在
-              expect(receipt).to.not.be.undefined;
-              
-              // 查找AuctionCreated事件
-              if (receipt.events) {
-                auctionCreatedEvent = receipt.events.find(e => e.event === 'AuctionCreated');
-                expect(auctionCreatedEvent).to.not.be.undefined;
-              } else {
-                console.log("警告：收据中没有事件");
-              }
-            } catch (secondError) {
-              console.error("第二次创建ERC20拍卖时出错:", secondError.message);
-              throw new Error(`第二次创建ERC20拍卖失败: ${secondError.message}`);
-            }
-          
-          // 验证事件参数（只有在event存在时才验证）
-          if (auctionCreatedEvent) {
-            expect(auctionCreatedEvent.args.auctionAddress).to.not.be.undefined;
-            expect(auctionCreatedEvent.args.seller).to.equal(seller.address);
-            expect(auctionCreatedEvent.args.nftAddress).to.equal(nftAddress);
-            expect(auctionCreatedEvent.args.tokenId).to.equal(0);
-            expect(auctionCreatedEvent.args.quoteToken).to.equal(erc20Address);
-          }
-        } else {
-          // 如果无法提取地址，我们仍然让测试失败
-          throw new Error("无法从错误中提取ERC20拍卖合约地址");
-        }
-      }
+      const tx = await auctionFactory.connect(seller).createAuction(
+        nftAddress,
+        0,
+        AUCTION_DURATION,
+        erc20Address
+      );
+
+      const receipt = await tx.wait();
+    //   const auctionCreatedEvent = receipt.events.find(e => e.event === 'AuctionCreated');
+      const blockNumber = receipt.blockNumber;
+
+      // 使用区块号而不是区块哈希
+      const filter = auctionFactory.filters.AuctionCreated();
+      const events = await auctionFactory.queryFilter(filter, blockNumber, blockNumber);
+      const auctionCreatedEvent = events[0];
+
+      const auctionAddress = auctionCreatedEvent.args.auctionAddress;
+      const auction = await ethers.getContractAt('Auction', auctionAddress);
+      // 先授权NFT给拍卖合约，使其有权限转移NFT
+      await nft.connect(seller).approve(auctionAddress, 0); 
+      // 调用transferNFT函数将NFT从卖家转移到拍卖合约
+      await auction.connect(seller).transferNFT(seller.address);
+
+      expect(auctionCreatedEvent.args.quoteToken).to.equal(erc20Address);
     });
 
     it("只有NFT所有者可以创建拍卖", async function () {
-      const nftAddress = await nft.getAddress();
       await expect(
         auctionFactory.connect(bidder1).createAuction(
-          nftAddress,
+          await nft.getAddress(),
           0,
           AUCTION_DURATION,
-          "0x0000000000000000000000000000000000000000" // 固定的零地址
+          ethers.ZeroAddress
         )
-      ).to.be.reverted;
+      ).to.be.revertedWith("Not NFT owner");
     });
 
     it("不能使用不支持的代币创建拍卖", async function () {
-      const nftAddress = await nft.getAddress();
       await expect(
         auctionFactory.connect(seller).createAuction(
-          nftAddress,
+          await nft.getAddress(),
           0,
           AUCTION_DURATION,
           bidder1.address // 随机地址，不支持
         )
-      ).to.be.reverted;
+      ).to.be.revertedWith("Quote token not supported");
     });
   });
 
@@ -338,31 +460,43 @@ describe("NFT Auction Market - 完整测试套件", function () {
     beforeEach(async function () {
       // 创建拍卖
         await nft.mint(seller.address); // 铸造NFT给卖家
-        await nft.connect(seller).approve(auctionFactory.address, 0); // 授权工厂合约调用
+        // await nft.connect(seller).approve(await auctionFactory.getAddress(), 0); // 授权工厂合约调用
+        const factoryAddress = await auctionFactory.getAddress(); // 获取工厂合约地址
+        const nftAddress = await nft.getAddress(); // 获取NFT合约地址
         // 创建拍卖
-      const tx = await auctionFactory.connect(seller).createAuction(
-        nft.address,
-        0,
-        AUCTION_DURATION,
-        ethers.constants.AddressZero
+        const tx = await auctionFactory.connect(seller).createAuction(
+          nftAddress,
+          0,
+          AUCTION_DURATION,
+          ethers.ZeroAddress
       );
 
       const receipt = await tx.wait();
-      auctionAddress = receipt.events.find(e => e.event === 'AuctionCreated').args.auctionAddress;
+    //   auctionAddress = receipt.events.find(e => e.event === 'AuctionCreated').args.auctionAddress;
+      const blockNumber = receipt.blockNumber;
+
+      // 使用区块号而不是区块哈希
+      const filter = auctionFactory.filters.AuctionCreated();
+      const events = await auctionFactory.queryFilter(filter, blockNumber, blockNumber);
+      const auctionCreatedEvent = events[0]
+
+       // 获取拍卖合约实例
+      auctionAddress = auctionCreatedEvent.args.auctionAddress;
+      auction = await ethers.getContractAt('Auction', auctionAddress);
       
-      const Auction = await ethers.getContractFactory("Auction");
-      auction = await Auction.attach(auctionAddress);
+    //   const Auction = await ethers.getContractFactory("Auction");
+    //   auction = await Auction.attach(auctionAddress);
     });
 
     it("应该正确初始化拍卖状态", async function () {
       const auctionDetails = await auction.getAuctionDetails();
       
       expect(auctionDetails.seller).to.equal(seller.address);
-      expect(auctionDetails.nftAddress).to.equal(nft.address);
+      expect(auctionDetails.nftAddress).to.equal(await nft.getAddress());
       expect(auctionDetails.tokenId).to.equal(0);
       expect(auctionDetails.ended).to.be.false;
       expect(auctionDetails.highestBid).to.equal(0);
-      expect(auctionDetails.highestBidder).to.equal(ethers.constants.AddressZero);
+      expect(auctionDetails.highestBidder).to.equal(ethers.ZeroAddress);
     });
 
     it("应该允许用户出价", async function () {
@@ -421,6 +555,11 @@ describe("NFT Auction Market - 完整测试套件", function () {
       // 记录结束前余额
       const sellerBalanceBefore = await ethers.provider.getBalance(seller.address);
       const feeRecipientBalanceBefore = await ethers.provider.getBalance(feeRecipient.address);
+
+      // 先授权NFT给出价合约，使其有权限转移NFT
+      await nft.connect(seller).approve(auctionAddress, 0); 
+    //   // 调用transferNFT函数将NFT从卖家转移到拍卖合约
+      await auction.connect(seller).transferNFT(seller.address);
       
       // 结束拍卖
       await expect(auction.connect(seller).endAuction())
@@ -439,11 +578,20 @@ describe("NFT Auction Market - 完整测试套件", function () {
       const feeRecipientBalanceAfter = await ethers.provider.getBalance(feeRecipient.address);
       
       // 卖家应该收到出价金额减去手续费
-      const expectedSellerAmount = BID_AMOUNT_1.sub(await auction.calculateDynamicFee(BID_AMOUNT_1));
-      expect(sellerBalanceAfter.sub(sellerBalanceBefore)).to.be.closeTo(expectedSellerAmount, ethers.utils.parseEther("0.01"));
+      const fee = await auction.calculateDynamicFee(BID_AMOUNT_1);
+      const expectedSellerAmount = BID_AMOUNT_1 - fee;
+      expect(sellerBalanceAfter - sellerBalanceBefore).to.be.closeTo(expectedSellerAmount, ethers.parseEther("0.01"));
     });
 
     it("无出价时可以取消拍卖", async function () {
+      // 授权NFT给拍卖合约，使其有权限转移NFT
+      await nft.connect(seller).approve(auctionAddress, 0);
+      // 调用transferNFT函数将NFT从卖家转移到拍卖合约
+      //Auction的cancelAuction函数里有
+      // IERC721(auctionData.nftAddress).transferFrom(address(this), auctionData.seller, auctionData.tokenId);
+      //证明此时的代币应在拍卖合约本身里，所以此时需要先将代币从卖家转移到拍卖合约里
+      await auction.connect(seller).transferNFT(seller.address);
+      
       await expect(auction.connect(seller).cancelAuction())
         .to.emit(auction, "AuctionCancelled")
         .withArgs(seller.address);
@@ -475,7 +623,7 @@ describe("NFT Auction Market - 完整测试套件", function () {
       const timeInfo = await auction.getAuctionTimeInfo();
       
       expect(timeInfo.startTime).to.be.gt(0);
-      expect(timeInfo.endTime).to.equal(timeInfo.startTime.add(AUCTION_DURATION));
+      expect(timeInfo.endTime).to.equal(timeInfo.startTime + BigInt(AUCTION_DURATION));
       expect(timeInfo.timeRemaining).to.be.lte(AUCTION_DURATION);
     });
 
@@ -497,20 +645,30 @@ describe("NFT Auction Market - 完整测试套件", function () {
     beforeEach(async function () {
       // 创建ERC20拍卖
       await nft.mint(seller.address);
-      await nft.connect(seller).approve(auctionFactory.address, 0);
+      await nft.connect(seller).approve(await auctionFactory.getAddress(), 0);
       //只有NFT所有者能创建拍卖即seller,见line117
       const tx = await auctionFactory.connect(seller).createAuction(
-        nft.address,
+        nft.getAddress(),
         0,
         AUCTION_DURATION,
-        mockERC20.address
+        mockERC20.getAddress(),
       );
 
       const receipt = await tx.wait();
-      auctionAddress = receipt.events.find(e => e.event === 'AuctionCreated').args.auctionAddress;
+    //   auctionAddress = receipt.events.find(e => e.event === 'AuctionCreated').args.auctionAddress;
+     const blockNumber = receipt.blockNumber;
+
+      // 使用区块号而不是区块哈希
+      const filter = auctionFactory.filters.AuctionCreated();
+      const events = await auctionFactory.queryFilter(filter, blockNumber, blockNumber);
+      const auctionCreatedEvent = events[0]
+
+       // 获取拍卖合约实例
+      auctionAddress = auctionCreatedEvent.args.auctionAddress;
+      auction = await ethers.getContractAt('Auction', auctionAddress);
       
-      const Auction = await ethers.getContractFactory("Auction");
-      auction = await Auction.attach(auctionAddress); //获取一个已部署合约的“句柄
+    //   const Auction = await ethers.getContractFactory("Auction");
+    //   auction = await Auction.attach(auctionAddress); //获取一个已部署合约的“句柄
     });
 
     it("应该允许使用ERC20代币出价", async function () {
@@ -536,7 +694,7 @@ describe("NFT Auction Market - 完整测试套件", function () {
   describe("合约升级测试", function () {
     it("应该成功升级到V2", async function () {
       const AuctionFactoryV2 = await ethers.getContractFactory("AuctionFactoryV2");
-      auctionFactoryV2 = await upgrades.upgradeProxy(auctionFactory.address, AuctionFactoryV2);
+      auctionFactoryV2 = await upgrades.upgradeProxy(await auctionFactory.getAddress(), AuctionFactoryV2);
       
       // 验证版本号
       expect(await auctionFactoryV2.version()).to.equal("v2.0.0");
@@ -549,7 +707,7 @@ describe("NFT Auction Market - 完整测试套件", function () {
     it("应该支持V2的新功能", async function () {
       // 先升级到V2
       const AuctionFactoryV2 = await ethers.getContractFactory("AuctionFactoryV2");
-      auctionFactoryV2 = await upgrades.upgradeProxy(auctionFactory.address, AuctionFactoryV2);
+      auctionFactoryV2 = await upgrades.upgradeProxy(await auctionFactory.getAddress(), AuctionFactoryV2);
       
       // 测试用户等级功能
       await auctionFactoryV2.updateUserLevel(bidder1.address);
@@ -576,7 +734,7 @@ describe("NFT Auction Market - 完整测试套件", function () {
       const AuctionFactoryV2 = await ethers.getContractFactory("AuctionFactoryV2");
       
       await expect(
-        upgrades.upgradeProxy(auctionFactory.address, AuctionFactoryV2.connect(seller))
+        upgrades.upgradeProxy(await auctionFactory.getAddress(), AuctionFactoryV2.connect(seller))
       ).to.be.reverted;
     });
   });
@@ -586,20 +744,30 @@ describe("NFT Auction Market - 完整测试套件", function () {
 
     beforeEach(async function () {
       await nft.mint(seller.address);
-      await nft.connect(seller).approve(auctionFactory.address, 0);
+      await nft.connect(seller).approve(await auctionFactory.getAddress(), 0);
 
       const tx = await auctionFactory.connect(seller).createAuction(
-        nft.address,
+        await nft.getAddress(),
         0,
         AUCTION_DURATION,
-        ethers.constants.AddressZero
+        ethers.ZeroAddress
       );
 
       const receipt = await tx.wait();
-      const auctionAddress = receipt.events.find(e => e.event === 'AuctionCreated').args.auctionAddress;
+    //   const auctionAddress = receipt.events.find(e => e.event === 'AuctionCreated').args.auctionAddress;
+      const blockNumber = receipt.blockNumber;
+
+      // 使用区块号而不是区块哈希
+      const filter = auctionFactory.filters.AuctionCreated();
+      const events = await auctionFactory.queryFilter(filter, blockNumber, blockNumber);
+      const auctionCreatedEvent = events[0]
+
+       // 获取拍卖合约实例
+      auctionAddress = auctionCreatedEvent.args.auctionAddress;
+      auction = await ethers.getContractAt('Auction', auctionAddress);
       
-      const Auction = await ethers.getContractFactory("Auction");
-      auction = await Auction.attach(auctionAddress);
+    //   const Auction = await ethers.getContractFactory("Auction");
+    //   auction = await Auction.attach(auctionAddress);
     });
 
     it("不能对已结束的拍卖出价", async function () {
@@ -633,7 +801,7 @@ describe("NFT Auction Market - 完整测试套件", function () {
 
     it("ETH出价金额必须匹配", async function () {
       await expect(
-        auction.connect(bidder1).bid(BID_AMOUNT_1, { value: BID_AMOUNT_1.div(2) })
+        auction.connect(bidder1).bid(BID_AMOUNT_1, { value: BID_AMOUNT_1 / 2n })
       ).to.be.revertedWith("ETH amount does not match bid amount");
     });
   });
@@ -642,20 +810,27 @@ describe("NFT Auction Market - 完整测试套件", function () {
     it("视图函数应该消耗较少gas", async function () {
       // 创建拍卖
       await nft.mint(seller.address);
-      await nft.connect(seller).approve(auctionFactory.address, 0);
+      await nft.connect(seller).approve(await auctionFactory.getAddress(), 0);
 
       const tx = await auctionFactory.connect(seller).createAuction(
-        nft.address,
+        await nft.getAddress(),
         0,
         AUCTION_DURATION,
-        ethers.constants.AddressZero
+        ethers.ZeroAddress
       );
 
       const receipt = await tx.wait();
-      const auctionAddress = receipt.events.find(e => e.event === 'AuctionCreated').args.auctionAddress;
+    //   const auctionAddress = receipt.events.find(e => e.event === 'AuctionCreated').args.auctionAddress;
+      const blockNumber = receipt.blockNumber;
       
-      const Auction = await ethers.getContractFactory("Auction");
-      const auction = await Auction.attach(auctionAddress);
+      // 使用区块号而不是区块哈希
+      const filter = auctionFactory.filters.AuctionCreated();
+      const events = await auctionFactory.queryFilter(filter, blockNumber, blockNumber);
+      const auctionCreatedEvent = events[0]
+
+       // 获取拍卖合约实例
+      auctionAddress = auctionCreatedEvent.args.auctionAddress;
+      auction = await ethers.getContractAt('Auction', auctionAddress);
 
       // 测试视图函数的gas消耗
       const detailsTx = await auction.getAuctionDetails();

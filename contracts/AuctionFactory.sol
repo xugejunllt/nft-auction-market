@@ -6,6 +6,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "./Auction.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 /**
  * @title AuctionFactory
@@ -95,7 +96,17 @@ contract AuctionFactory is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         // 只有所有者可以授权合约升级
     }
 
-     /**
+    /**
+     * @dev 将NFT从卖家转移到拍卖合约
+     * @param _auction 拍卖合约实例
+     * @param _seller 卖家地址
+     */
+    function _transferNFTToAuction(Auction _auction, address _seller) internal {
+        // 调用拍卖合约的transferNFT函数将NFT从卖家转移到拍卖合约
+        _auction.transferNFT(_seller);
+    }
+
+    /**
      * @dev 添加支持的报价代币
      * @param _token 代币地址（address(0)表示ETH）
      * @param _priceFeed 对应的Chainlink价格预言机地址
@@ -156,6 +167,10 @@ contract AuctionFactory is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         // 记录新拍卖合约地址
         address auctionAddress = address(newAuction);
         auctions.push(auctionAddress);
+        
+        
+        // 调用新函数将NFT从卖家转移到拍卖合约
+        // _transferNFTToAuction(newAuction, msg.sender);
         
         // 更新统计信息
         factoryConfig.totalAuctionsCreated++;
