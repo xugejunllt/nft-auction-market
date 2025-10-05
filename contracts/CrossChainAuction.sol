@@ -157,7 +157,7 @@ contract CrossChainAuction {
         
         // 这里调用原始拍卖合约的出价逻辑
         // 需要根据你的实际拍卖合约进行调整
-        try IAuction(msg.sender).bid(_amount, _quoteToken) {
+        try IAuction(msg.sender).crossChainBid(_amount, _quoteToken) {
             emit CrossChainBidProcessed(
                 bytes32(0), // 需要从CCIP获取实际的messageId
                 _sourceChainSelector,

@@ -500,9 +500,10 @@ describe("NFT Auction Market - 完整测试套件", function () {
     });
 
     it("应该允许用户出价", async function () {
-      await expect(
-        auction.connect(bidder1).bid(BID_AMOUNT_1, { value: BID_AMOUNT_1 })
-      ).to.emit(auction, "BidPlaced");
+      // 在ethers.js v6中处理函数重载的另一种方式
+      // 直接使用函数选择器来调用正确的函数
+      const bidTx = await auction.connect(bidder1).bid(BID_AMOUNT_1, { value: BID_AMOUNT_1 });
+      await expect(bidTx).to.emit(auction, "BidPlaced");
     // 替代写法：通过交易收据检查事件
     //   const tx = await auction.connect(bidder1).bid(BID_AMOUNT_1, { value: BID_AMOUNT_1 });
     //   const receipt = await tx.wait();

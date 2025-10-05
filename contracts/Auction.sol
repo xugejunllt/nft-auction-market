@@ -10,7 +10,7 @@ import "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.so
 
 
 interface IAuction {
-    function bid(uint256 amount, address quoteToken) external returns (bool);
+    function crossChainBid(uint256 amount, address quoteToken) external returns (bool);
 }
 
 
@@ -44,9 +44,9 @@ contract Auction is ReentrancyGuard {
     }
 
     /**
-    * @dev 支持指定报价代币的出价函数
+   * @dev 支持指定报价代币的跨链出价函数
    */
-  function bid(uint256 amount, address quoteToken) public returns (bool) {
+  function crossChainBid(uint256 amount, address quoteToken) public returns (bool) {
       // 验证代币地址匹配
       require(quoteToken == auctionData.quoteToken, "Invalid quote token");
     
