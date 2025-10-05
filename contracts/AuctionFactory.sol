@@ -14,28 +14,57 @@ import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
  * @notice 负责创建和管理所有拍卖合约实例，支持多种报价代币
  */
 contract AuctionFactory is Initializable, UUPSUpgradeable, OwnableUpgradeable {
+    // 在AuctionFactory.sol中添加
+    address public crossChainAuctionTemplate;
+    mapping(address => uint64) public auctionChainSelectors;
+
+    /**
+     * @dev 设置跨链拍卖模板
+     */
+    function setCrossChainAuctionTemplate(address _template) public onlyOwner {
+        crossChainAuctionTemplate = _template;
+    }
+
+    /**
+     * @dev 创建跨链拍卖
+     */
+    function createCrossChainAuction(
+        address _nftAddress,
+        uint256 _tokenId,
+        uint256 _duration,
+        address _quoteToken,
+        uint64 _chainSelector
+    ) public returns (address) {
+        // 创建标准拍卖
+        address auction = createAuction(_nftAddress, _tokenId, _duration, _quoteToken);
+        
+        // 设置跨链信息
+        Auction(auction).setCrossChainAuction(crossChainAuctionTemplate, _chainSelector);
+        auctionChainSelectors[auction] = _chainSelector;
+        
+        return auction;
+    }
     // 工厂配置结构体
     struct FactoryConfig {
-        address platformFeeRecipient;     // 平台手续费接收地址
-        uint256 totalAuctionsCreated;     // 总创建的拍卖数量
-        uint256 totalTradingVolume;       // 总交易量
+        address platformFeeRecipient;    // 平台手续费接收地址
+        uint256 totalAuctionsCreated;    // 总创建的拍卖数量
+        uint256 totalTradingVolume;      // 总交易量
     }
 
     // 支持的代币信息结构体
     struct TokenConfig {
-        bool isSupported;                 // 是否支持该代币
-        address priceFeed;                // 对应的价格预言机地址
-        string symbol;                    // 代币符号（可选）
+        bool isSupported;                // 是否支持该代币
+        address priceFeed;               // 对应的价格预言机地址
+        string symbol;                   // 代币符号（可选）
     }
 
     // 用户统计结构体
     struct UserStats {
-        uint256 tradingVolume;            // 用户总交易量
-        uint256 tradingCount;             // 用户交易次数
-        uint256 createdAuctions;          // 用户创建的拍卖数量
+        uint256 tradingVolume;           // 用户总交易量
+        uint256 tradingCount;            // 用户交易次数
+        uint256 createdAuctions;         // 用户创建的拍卖数量
     }
 
-    
     // 状态变量
     FactoryConfig public factoryConfig;                          // 工厂配置
     address[] public auctions;                                   // 所有拍卖合约地址数组
@@ -54,7 +83,7 @@ contract AuctionFactory is Initializable, UUPSUpgradeable, OwnableUpgradeable {
     event QuoteTokenAdded(address indexed token, address indexed priceFeed, string symbol);
     // 平台手续费接收地址更新事件
     event PlatformFeeRecipientUpdated(address indexed newRecipient);
-    // 用户统计信息更新事件 
+    // 用户统计信息更新事件
     event UserStatsUpdated(address indexed user, uint256 volume, uint256 count, uint256 created);
 
     /**
@@ -168,7 +197,6 @@ contract AuctionFactory is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         address auctionAddress = address(newAuction);
         auctions.push(auctionAddress);
         
-        
         // 调用新函数将NFT从卖家转移到拍卖合约
         // _transferNFTToAuction(newAuction, msg.sender);
         
@@ -182,7 +210,7 @@ contract AuctionFactory is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         return auctionAddress;
     }
 
-     /**
+    /**
      * @dev 获取所有拍卖合约地址
      * @return 拍卖地址数组
      */
@@ -209,7 +237,7 @@ contract AuctionFactory is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         emit PlatformFeeRecipientUpdated(_newRecipient);
     }
 
-     /**
+    /**
      * @dev 更新用户交易统计信息
      * @param user 用户地址
      * @param amount 交易金额
@@ -232,7 +260,7 @@ contract AuctionFactory is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         );
     }
 
-     /**
+    /**
      * @dev 获取用户统计信息
      * @param user 用户地址
      * @return 用户统计结构体
@@ -268,7 +296,7 @@ contract AuctionFactory is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         }
     }
 
-     /**
+    /**
      * @dev 获取合约版本信息
      * @return 版本字符串
      */

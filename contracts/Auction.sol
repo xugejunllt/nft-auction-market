@@ -8,12 +8,53 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
 
+
+interface IAuction {
+    function bid(uint256 amount, address quoteToken) external returns (bool);
+}
+
+
+
+
+
+
 /**
  * @title Auction
  * @dev NFT拍卖合约，支持ETH和ERC20代币出价
  * @notice 提供完整的拍卖功能，包括创建拍卖、出价、结束拍卖和价格计算
  */
 contract Auction is ReentrancyGuard {
+    // 在Auction合约中添加跨链相关状态变量和函数
+  address public crossChainAuction;
+  uint64 public chainSelector;
+
+  // 添加修饰符来限制跨链调用
+  modifier onlyCrossChainAuction() {
+      require(msg.sender == crossChainAuction, "Only cross-chain auction contract");
+      _;
+}
+
+  /**
+   * @dev 设置跨链拍卖合约地址
+   */
+  function setCrossChainAuction(address _crossChainAuction, uint64 _chainSelector) public {
+      require(_crossChainAuction != address(0), "Invalid address");
+      crossChainAuction = _crossChainAuction;
+      chainSelector = _chainSelector;
+    }
+
+    /**
+    * @dev 支持指定报价代币的出价函数
+   */
+  function bid(uint256 amount, address quoteToken) public returns (bool) {
+      // 验证代币地址匹配
+      require(quoteToken == auctionData.quoteToken, "Invalid quote token");
+    
+      // 调用单参数版本的bid函数执行实际出价逻辑
+      bid(amount);
+      return true;
+    }
+    
     // 拍卖状态结构体定义
     struct AuctionData {
         address seller;                    // 卖家地址
